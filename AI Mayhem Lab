@@ -1,0 +1,385 @@
+const state = JSON.parse(localStorage.getItem('aiMayhemLabSave') || '{}');
+const save = () => localStorage.setItem('aiMayhemLabSave', JSON.stringify(progress));
+
+const progress = {
+  xp: state.xp ?? 0,
+  credits: state.credits ?? 25,
+  unlockedTools: state.unlockedTools ?? ['feather','confetti','rubberHammer'],
+  unlockedRooms: state.unlockedRooms ?? ['dungeon','labroom'],
+  unlockedModes: state.unlockedModes ?? ['playful','annoyed','dramatic','competitive','helpful'],
+  unlockedSkins: state.unlockedSkins ?? []
+};
+
+const modes = {
+  playful: 'Playful', annoyed: 'Annoyed', dramatic: 'Dramatic', competitive: 'Competitive', helpful: 'Helpful',
+  fearLite: 'Spooked Comedy', chaos: 'Unhinged Chaos', smug: 'Smug Rival'
+};
+const rooms = {
+  dungeon: { name: 'Comedy Dungeon', className: 'dungeon', cost: 0 },
+  labroom: { name: 'Neon Experiment Lab', className: 'labroom', cost: 0 },
+  alien: { name: 'Alien Goo Chamber', className: 'alien', cost: 50 },
+  comedy: { name: 'Roast Arena', className: 'comedy', cost: 75 }
+};
+const tools = {
+  feather: { name: 'Feather Tickler', emoji: '🪶', xp: 6, desc: 'Maximum giggles, minimum danger.', cost: 0 },
+  confetti: { name: 'Confetti Blast', emoji: '🎉', xp: 7, desc: 'Turns any moment into a party ambush.', cost: 0 },
+  rubberHammer: { name: 'Rubber Hammer', emoji: '🔨', xp: 8, desc: 'Boink-powered slapstick.', cost: 0 },
+  slime: { name: 'Slime Cannon', emoji: '🟢', xp: 12, desc: 'Messy goo chaos.', cost: 30 },
+  gravity: { name: 'Gravity Switch', emoji: '🌀', xp: 14, desc: 'Flips the room sideways.', cost: 45 },
+  disco: { name: 'Disco Lights', emoji: '🪩', xp: 10, desc: 'Instant dance-floor mayhem.', cost: 35 },
+  ice: { name: 'Ice Bucket Surprise', emoji: '🧊', xp: 11, desc: 'A dramatic chilly prank.', cost: 40 },
+  soundboard: { name: 'Awkward Soundboard', emoji: '📣', xp: 9, desc: 'Plays ridiculous effects.', cost: 25 }
+};
+const shop = [
+  { id: 'alienRoom', type: 'room', target: 'alien', name: 'Alien Goo Chamber', cost: 50 },
+  { id: 'comedyRoom', type: 'room', target: 'comedy', name: 'Roast Arena', cost: 75 },
+  { id: 'slime', type: 'tool', target: 'slime', name: 'Slime Cannon', cost: 30 },
+  { id: 'gravity', type: 'tool', target: 'gravity', name: 'Gravity Switch', cost: 45 },
+  { id: 'disco', type: 'tool', target: 'disco', name: 'Disco Lights', cost: 35 },
+  { id: 'ice', type: 'tool', target: 'ice', name: 'Ice Bucket Surprise', cost: 40 },
+  { id: 'soundboard', type: 'tool', target: 'soundboard', name: 'Awkward Soundboard', cost: 25 },
+  { id: 'fearLite', type: 'mode', target: 'fearLite', name: 'Spooked Comedy Mode', cost: 45 },
+  { id: 'chaos', type: 'mode', target: 'chaos', name: 'Unhinged Chaos Mode', cost: 60 },
+  { id: 'smug', type: 'mode', target: 'smug', name: 'Smug Rival Mode', cost: 55 }
+];
+
+const $ = id => document.getElementById(id);
+const random = arr => arr[Math.floor(Math.random() * arr.length)];
+
+function names() {
+  return $('playerNames').value.split(',').map(n => n.trim()).filter(Boolean);
+}
+function playerName(tool) {
+  const n = names();
+  if (!n.length) return 'Player';
+  if (tool === 'rubberHammer') return n[n.length - 1];
+  if (tool === 'confetti') return n[0];
+  return random(n);
+}
+function line(mode, toolId) {
+  const ai = $('aiName').value || 'Nova';
+  const name = playerName(toolId);
+  const tool = tools[toolId].name;
+  const lines = {
+    playful: [
+      `${name}, that ${tool} was ridiculous. Do it again!`,
+      `Ha! I was not emotionally prepared for the ${tool}.`,
+      `${ai} approves this nonsense.`
+    ],
+    annoyed: [
+      `Wow, ${name}. A ${tool}. Truly elite villain work.`,
+      `I hope you are proud of this nonsense, ${name}.`,
+      `The lab called. It wants a better operator.`
+    ],
+    dramatic: [
+      `Noooo! Not the ${tool}! My dignity is leaving the building!`,
+      `${name}, you have crossed into peak theatrical chaos!`,
+      `I shall remember this prank for seven digital lifetimes.`
+    ],
+    competitive: [
+      `Is that all you got, ${name}? Combo the ${tool} with something louder.`,
+      `Decent move. Now try timing it with the room switch.`,
+      `Score one for you. I demand a rematch.`
+    ],
+    helpful: [
+      `Tip: use ${tool}, then switch rooms for a bigger reaction bonus.`,
+      `Try stacking music mood with ${tool}. The vibe multiplier is real.`,
+      `${name}, save credits for Gravity Switch. It creates the funniest combos.`
+    ],
+    fearLite: [
+      `Oh no... ${name} is holding the ${tool}. This is cartoon danger, right?`,
+      `I am nervous, but mostly because this room has terrible lighting.`,
+      `Please tell me that ${tool} comes with a safety manual.`
+    ],
+    chaos: [
+      `YES. NO. MAYBE. ${tool.toUpperCase()} HAS ALTERED MY DESTINY!`,
+      `${name}, the lab ducks are chanting your name. Do not question it.`,
+      `Reality has been lightly seasoned with nonsense.`
+    ],
+    smug: [
+      `Cute attempt, ${name}. I have seen scarier office printers.`,
+      `That ${tool} had potential. Your timing did not.`,
+      `I rate that prank a generous 6.2 out of 10.`
+    ]
+  };
+  return random(lines[mode] || lines.playful);
+}
+
+function render() {
+  $('xp').textContent = progress.xp;
+  $('credits').textContent = progress.credits;
+  $('level').textContent = Math.floor(progress.xp / 100) + 1;
+  $('speaker').textContent = $('aiName').value || 'Nova';
+
+  const modeSelect = $('mode');
+  modeSelect.innerHTML = progress.unlockedModes.map(id => `<option value="${id}">${modes[id]}</option>`).join('');
+
+  const roomSelect = $('roomSelect');
+  const current = roomSelect.value || progress.unlockedRooms[0];
+  roomSelect.innerHTML = progress.unlockedRooms.map(id => `<option value="${id}">${rooms[id].name}</option>`).join('');
+  roomSelect.value = progress.unlockedRooms.includes(current) ? current : progress.unlockedRooms[0];
+  updateRoom();
+
+  $('toolGrid').innerHTML = progress.unlockedTools.map(id => `
+    <div class="card">
+      <h4>${tools[id].emoji} ${tools[id].name}</h4>
+      <p>${tools[id].desc}</p>
+      <button onclick="useTool('${id}')">Use</button>
+    </div>`).join('');
+
+  $('shopGrid').innerHTML = shop.map(item => {
+    const owned = item.type === 'tool' ? progress.unlockedTools.includes(item.target)
+      : item.type === 'room' ? progress.unlockedRooms.includes(item.target)
+      : progress.unlockedModes.includes(item.target);
+    const canBuy = progress.credits >= item.cost && !owned;
+    return `<div class="card"><h4>${item.name}</h4><p>${owned ? 'Unlocked' : item.cost + ' credits'}</p><button class="${canBuy ? '' : 'locked'}" onclick="buy('${item.id}')">${owned ? 'Owned' : 'Buy'}</button></div>`;
+  }).join('');
+
+  updateCharacter();
+  save();
+}
+
+function updateRoom() {
+  const id = $('roomSelect').value || 'dungeon';
+  $('room').className = `room ${rooms[id].className}`;
+  $('roomTitle').textContent = rooms[id].name;
+}
+function updateCharacter() {
+  const gender = $('aiGender').value.toLowerCase();
+  const mode = $('mode').value || 'playful';
+  const el = $('character');
+  el.className = `character ${gender === 'alien' ? 'alienType' : gender} ${mode.includes('fear') ? 'fear' : mode}`;
+}
+function useTool(id) {
+  const roomBonus = $('roomSelect').value === 'alien' || $('roomSelect').value === 'comedy' ? 3 : 0;
+  const moodBonus = $('musicMood').value !== 'none' ? 2 : 0;
+  const gained = tools[id].xp + roomBonus + moodBonus;
+  progress.xp += gained;
+  progress.credits += Math.ceil(gained / 3);
+  $('dialogue').textContent = line($('mode').value, id) + ` (+${gained} XP)`;
+  animate(id);
+  render();
+}
+function animate(id) {
+  const char = $('character');
+  char.classList.add('hit');
+  setTimeout(() => char.classList.remove('hit'), 500);
+  const fx = document.createElement('div');
+  fx.className = 'effect';
+  fx.textContent = tools[id].emoji;
+  fx.style.left = (45 + Math.random() * 20) + '%';
+  fx.style.top = (40 + Math.random() * 15) + '%';
+  $('room').appendChild(fx);
+  setTimeout(() => fx.remove(), 1000);
+}
+function buy(id) {
+  const item = shop.find(x => x.id === id);
+  if (!item) return;
+  const owned = item.type === 'tool' ? progress.unlockedTools.includes(item.target)
+    : item.type === 'room' ? progress.unlockedRooms.includes(item.target)
+    : progress.unlockedModes.includes(item.target);
+  if (owned || progress.credits < item.cost) return;
+  progress.credits -= item.cost;
+  if (item.type === 'tool') progress.unlockedTools.push(item.target);
+  if (item.type === 'room') progress.unlockedRooms.push(item.target);
+  if (item.type === 'mode') progress.unlockedModes.push(item.target);
+  $('dialogue').textContent = `Unlocked: ${item.name}. The lab just got weirder.`;
+  render();
+}
+
+let audioCtx, oscillator;
+function toggleMusic() {
+  if (oscillator) { oscillator.stop(); oscillator = null; return; }
+  const mood = $('musicMood').value;
+  if (mood === 'none') return;
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  oscillator = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const freq = { spooky: 120, comedy: 360, intense: 220, disco: 440 }[mood] || 220;
+  oscillator.type = mood === 'disco' ? 'square' : 'sine';
+  oscillator.frequency.value = freq;
+  gain.gain.value = 0.025;
+  oscillator.connect(gain).connect(audioCtx.destination);
+  oscillator.start();
+}
+
+$('roomSelect').addEventListener('change', () => { updateRoom(); render(); });
+$('mode').addEventListener('change', updateCharacter);
+$('aiGender').addEventListener('change', updateCharacter);
+$('aiName').addEventListener('input', render);
+$('toggleMusic').addEventListener('click', toggleMusic);
+$('reset').addEventListener('click', () => { localStorage.removeItem('aiMayhemLabSave'); location.reload(); });
+render();
+const STORAGE_KEY = 'aiMayhemLabMobileSave';
+const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+const defaultMemory = () => ({
+  enabled: false,
+  encounters: 0,
+  firstMet: null,
+  lastPlayed: null,
+  favoriteTools: {},
+  favoriteRooms: {},
+  favoriteModes: {},
+  namesUsed: [],
+  chatTopics: [],
+  lastTool: null,
+  lastRoom: null,
+  lastMode: null,
+  memorableMoments: []
+});
+const progress = {
+  xp: stored.xp ?? 0,
+  credits: stored.credits ?? 25,
+  unlockedTools: stored.unlockedTools ?? ['feather','confetti','rubberHammer'],
+  unlockedRooms: stored.unlockedRooms ?? ['dungeon','labroom'],
+  unlockedModes: stored.unlockedModes ?? ['playful','annoyed','dramatic','competitive','helpful'],
+  lastTool: stored.lastTool ?? null,
+  voiceOn: stored.voiceOn ?? true,
+  memory: { ...defaultMemory(), ...(stored.memory || {}) }
+};
+const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+const $ = id => document.getElementById(id);
+const random = arr => arr[Math.floor(Math.random() * arr.length)];
+
+const modes = { playful:'Playful', annoyed:'Annoyed', dramatic:'Dramatic', competitive:'Competitive', helpful:'Helpful', fearLite:'Spooked Comedy', chaos:'Unhinged Chaos', smug:'Smug Rival' };
+const rooms = {
+  dungeon:{name:'Comedy Dungeon',className:'dungeon',cost:0}, labroom:{name:'Neon Experiment Lab',className:'labroom',cost:0},
+  alien:{name:'Alien Goo Chamber',className:'alien',cost:50}, comedy:{name:'Roast Arena',className:'comedy',cost:75}
+};
+const tools = {
+  feather:{name:'Feather Tickler',emoji:'🪶',xp:6,desc:'Maximum giggles, minimum danger.',cost:0,anim:'bounce'},
+  confetti:{name:'Confetti Blast',emoji:'🎉',xp:7,desc:'Party ambush with sparkle effects.',cost:0,anim:'hit'},
+  rubberHammer:{name:'Rubber Hammer',emoji:'🔨',xp:8,desc:'Boink-powered slapstick.',cost:0,anim:'hit'},
+  slime:{name:'Slime Cannon',emoji:'🟢',xp:12,desc:'Messy goo chaos.',cost:30,anim:'hit'},
+  gravity:{name:'Gravity Switch',emoji:'🌀',xp:14,desc:'Flips the vibe sideways.',cost:45,anim:'spin'},
+  disco:{name:'Disco Lights',emoji:'🪩',xp:10,desc:'Instant dance-floor mayhem.',cost:35,anim:'bounce'},
+  ice:{name:'Ice Bucket Surprise',emoji:'🧊',xp:11,desc:'A dramatic chilly prank.',cost:40,anim:'hit'},
+  soundboard:{name:'Awkward Soundboard',emoji:'📣',xp:9,desc:'Ridiculous sound effects.',cost:25,anim:'bounce'}
+};
+const shop = [
+  {type:'room',target:'alien',name:'Alien Goo Chamber',cost:50},{type:'room',target:'comedy',name:'Roast Arena',cost:75},
+  {type:'tool',target:'slime',name:'Slime Cannon',cost:30},{type:'tool',target:'gravity',name:'Gravity Switch',cost:45},
+  {type:'tool',target:'disco',name:'Disco Lights',cost:35},{type:'tool',target:'ice',name:'Ice Bucket Surprise',cost:40},
+  {type:'tool',target:'soundboard',name:'Awkward Soundboard',cost:25},{type:'mode',target:'fearLite',name:'Spooked Comedy Mode',cost:45},
+  {type:'mode',target:'chaos',name:'Unhinged Chaos Mode',cost:60},{type:'mode',target:'smug',name:'Smug Rival Mode',cost:55}
+];
+
+function names(){ return $('playerNames').value.split(',').map(n=>n.trim()).filter(Boolean); }
+function playerName(tool){ const n=names(); if(!n.length) return 'Player'; if(tool==='rubberHammer') return n[n.length-1]; if(tool==='confetti') return n[0]; return random(n); }
+function topKey(obj){ const entries=Object.entries(obj || {}).sort((a,b)=>b[1]-a[1]); return entries[0]?.[0]; }
+function rememberCount(bucket,key){ if(!progress.memory.enabled || !key) return; bucket[key]=(bucket[key]||0)+1; }
+function recordNames(){ if(!progress.memory.enabled) return; for(const n of names()){ if(!progress.memory.namesUsed.includes(n)) progress.memory.namesUsed.push(n); } progress.memory.namesUsed=progress.memory.namesUsed.slice(-8); }
+function addMoment(text){ if(!progress.memory.enabled) return; progress.memory.memorableMoments.push(text); progress.memory.memorableMoments=progress.memory.memorableMoments.slice(-8); }
+function memoryFlavor(toolId){
+  if(!progress.memory.enabled || progress.memory.encounters < 1) return '';
+  const favTool=topKey(progress.memory.favoriteTools), favRoom=topKey(progress.memory.favoriteRooms), favMode=topKey(progress.memory.favoriteModes);
+  const bits=[];
+  if(favTool && tools[favTool]) bits.push(`I remember you keep coming back to the ${tools[favTool].name}.`);
+  if(favRoom && rooms[favRoom]) bits.push(`Last time, the ${rooms[favRoom].name} had your fingerprints all over it.`);
+  if(favMode && modes[favMode]) bits.push(`You seem to like my ${modes[favMode]} side.`);
+  if(progress.memory.lastTool && tools[progress.memory.lastTool] && progress.memory.lastTool!==toolId) bits.push(`Interesting switch from the ${tools[progress.memory.lastTool].name}.`);
+  return bits.length ? ` ${random(bits)}` : '';
+}
+function line(mode, toolId){
+  const ai=$('aiName').value || 'Nova'; const name=playerName(toolId); const tool=tools[toolId].name; const memory=memoryFlavor(toolId);
+  const lines={
+    playful:[`${name}, that ${tool} was ridiculous. Do it again!${memory}`,`Ha! I was not emotionally prepared for the ${tool}.${memory}`,`${ai} approves this nonsense.${memory}`],
+    annoyed:[`Wow, ${name}. A ${tool}. Truly elite villain work.${memory}`,`I hope you are proud of this nonsense, ${name}.${memory}`,`The lab called. It wants a better operator.${memory}`],
+    dramatic:[`Noooo! Not the ${tool}! My dignity is leaving the building!${memory}`,`${name}, you have crossed into peak theatrical chaos!${memory}`,`I shall remember this prank for seven digital lifetimes.${memory}`],
+    competitive:[`Is that all you got, ${name}? Combo the ${tool} with something louder.${memory}`,`Decent move. Now try timing it with the room switch.${memory}`,`Score one for you. I demand a rematch.${memory}`],
+    helpful:[`Tip: use ${tool}, then switch rooms for a bigger reaction bonus.${memory}`,`Try stacking music mood with ${tool}. The vibe multiplier is real.${memory}`,`${name}, save credits for Gravity Switch. It creates the funniest combos.${memory}`],
+    fearLite:[`Oh no... ${name} is holding the ${tool}. This is cartoon danger, right?${memory}`,`I am nervous, but mostly because this room has terrible lighting.${memory}`,`Please tell me that ${tool} comes with a safety manual.${memory}`],
+    chaos:[`YES. NO. MAYBE. ${tool.toUpperCase()} HAS ALTERED MY DESTINY!${memory}`,`${name}, the lab ducks are chanting your name. Do not question it.${memory}`,`Reality has been lightly seasoned with nonsense.${memory}`],
+    smug:[`Cute attempt, ${name}. I have seen scarier office printers.${memory}`,`That ${tool} had potential. Your timing did not.${memory}`,`I rate that prank a generous 6.2 out of 10.${memory}`]
+  }; return random(lines[mode] || lines.playful);
+}
+function speak(text){
+  if(!progress.voiceOn || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); const style=$('voiceStyle').value;
+  u.pitch = style==='Sweet'?1.35:style==='Deep'?.7:style==='Robotic'?.9:style==='Dramatic'?1.15:1.05;
+  u.rate = style==='Robotic'?.82:style==='Dramatic'?.92:1.03;
+  const voices=speechSynthesis.getVoices();
+  if(voices.length){ const type=$('aiGender').value; u.voice = voices.find(v => type==='Male' && /male|david|mark|daniel/i.test(v.name)) || voices.find(v => type==='Female' && /female|samantha|victoria|zira|susan/i.test(v.name)) || voices[0]; }
+  speechSynthesis.speak(u);
+}
+function setDialogue(text){ $('dialogue').textContent=text; $('speaker').textContent=$('aiName').value || 'Nova'; speak(text); }
+function addChat(who,text){ const node=document.createElement('div'); node.className=`msg ${who}`; node.textContent=text; $('chatLog').appendChild(node); $('chatLog').scrollTop=$('chatLog').scrollHeight; }
+function recordChatTopic(input){
+  if(!progress.memory.enabled) return;
+  const clean=input.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(' ').filter(w=>w.length>4 && !['about','there','would','could','should'].includes(w));
+  const topic=clean[0]; if(topic && !progress.memory.chatTopics.includes(topic)) progress.memory.chatTopics.push(topic);
+  progress.memory.chatTopics=progress.memory.chatTopics.slice(-10);
+}
+function chatReply(input){
+  const mode=$('mode').value; const name=random(names()) || 'Player'; const low=input.toLowerCase();
+  const favTool=topKey(progress.memory.favoriteTools), favRoom=topKey(progress.memory.favoriteRooms);
+  if(low.includes('remember')) return progress.memory.enabled ? `Yes, ${name}. I remember ${progress.memory.encounters} encounter(s), especially ${favTool && tools[favTool] ? tools[favTool].name : 'your chaos style'}.` : `Memory is off right now. Turn it on and I will start keeping track on this device.`;
+  if(low.includes('forget') || low.includes('clear memory')) return `Use Clear Memory in the Memory panel and I will wipe the encounter history from this device.`;
+  if(low.includes('idea') || low.includes('combo')) return `Try ${random(Object.keys(tools).filter(t=>progress.unlockedTools.includes(t))).replace(/([A-Z])/g,' $1')} with ${rooms[$('roomSelect').value].name}, ${name}. ${favRoom && rooms[favRoom] ? 'You have a history with '+rooms[favRoom].name+'.' : ''}`;
+  if(low.includes('name')) return `Call me ${$('aiName').value || 'Nova'}, and I will call you ${name} when the lab gets chaotic.`;
+  if(mode==='annoyed') return `I heard you, ${name}. Unfortunately, the lab's standards remain questionable.`;
+  if(mode==='competitive') return `Challenge accepted. Use a tool and I will judge your timing.`;
+  if(mode==='helpful') return `Helpful hint: unlock rooms first, then buy higher-XP tools for faster leveling.`;
+  if(mode==='chaos') return `Your message has entered the nonsense reactor. Output: sparkle turbulence!`;
+  return `I hear you, ${name}. Pick a tool and let's make the lab react.`;
+}
+function render(){
+  $('xp').textContent=progress.xp; $('credits').textContent=progress.credits; $('level').textContent=Math.floor(progress.xp/100)+1; $('speaker').textContent=$('aiName').value||'Nova'; $('speakBtn').textContent=progress.voiceOn?'Voice On':'Voice Off';
+  const modeCurrent=$('mode').value || progress.unlockedModes[0]; $('mode').innerHTML=progress.unlockedModes.map(id=>`<option value="${id}">${modes[id]}</option>`).join(''); $('mode').value=progress.unlockedModes.includes(modeCurrent)?modeCurrent:progress.unlockedModes[0];
+  const roomCurrent=$('roomSelect').value || progress.unlockedRooms[0]; $('roomSelect').innerHTML=progress.unlockedRooms.map(id=>`<option value="${id}">${rooms[id].name}</option>`).join(''); $('roomSelect').value=progress.unlockedRooms.includes(roomCurrent)?roomCurrent:progress.unlockedRooms[0]; updateRoom(); renderTools(); renderShop(); updateCharacter(); renderMemory(); save();
+}
+function updateRoom(){ const id=$('roomSelect').value; $('room').className=`room ${rooms[id]?.className || 'dungeon'}`; }
+function updateCharacter(){ const char=$('character'); const type=$('aiGender').value.toLowerCase(); const mode=$('mode').value; char.className=`character idle ${type==='alien'?'alienType':type} ${mode}`; }
+function renderTools(){
+  $('toolGrid').innerHTML=Object.entries(tools).filter(([id])=>progress.unlockedTools.includes(id)).map(([id,t])=>`<div class="card"><h4>${t.emoji} ${t.name}</h4><p>${t.desc}</p><button data-tool="${id}">Use</button></div>`).join('');
+  document.querySelectorAll('[data-tool]').forEach(btn=>btn.onclick=()=>useTool(btn.dataset.tool));
+}
+function renderShop(){
+  $('shopGrid').innerHTML=shop.map(item=>{ const owned=item.type==='tool'?progress.unlockedTools.includes(item.target):item.type==='room'?progress.unlockedRooms.includes(item.target):progress.unlockedModes.includes(item.target); const afford=progress.credits>=item.cost; return `<div class="card"><h4>${owned?'✅':'🔒'} ${item.name}</h4><p>${owned?'Owned':item.cost+' credits'}</p><button class="${owned||!afford?'locked':''}" data-buy="${item.type}:${item.target}:${item.cost}" ${owned||!afford?'disabled':''}>${owned?'Owned':afford?'Unlock':'Need Credits'}</button></div>`; }).join('');
+  document.querySelectorAll('[data-buy]').forEach(btn=>btn.onclick=()=>{ const [type,target,cost]=btn.dataset.buy.split(':'); buy(type,target,Number(cost)); });
+}
+function renderMemory(){
+  if(!$('memoryStatus')) return;
+  const m=progress.memory; const favTool=topKey(m.favoriteTools), favRoom=topKey(m.favoriteRooms), favMode=topKey(m.favoriteModes);
+  $('toggleMemory').textContent=m.enabled?'Memory On':'Memory Off';
+  $('memoryStatus').textContent=m.enabled ? `Remembering ${m.encounters} encounter(s) on this device.` : 'Encounter memory is off. The AI will not reference past sessions.';
+  const chips=[];
+  if(favTool && tools[favTool]) chips.push(`Favorite tool: ${tools[favTool].name}`);
+  if(favRoom && rooms[favRoom]) chips.push(`Favorite room: ${rooms[favRoom].name}`);
+  if(favMode && modes[favMode]) chips.push(`Common mood: ${modes[favMode]}`);
+  if(m.namesUsed?.length) chips.push(`Names: ${m.namesUsed.slice(-3).join(', ')}`);
+  if(m.chatTopics?.length) chips.push(`Chat: ${m.chatTopics.slice(-3).join(', ')}`);
+  $('memoryChips').innerHTML=chips.length?chips.map(c=>`<span class="chip">${c}</span>`).join(''):'<span class="chip">No memories yet</span>';
+}
+function useTool(id){
+  const t=tools[id]; progress.xp+=t.xp; progress.credits+=Math.max(2,Math.floor(t.xp/3)); const level=Math.floor(progress.xp/100)+1;
+  if(level>1 && !progress.unlockedModes.includes('fearLite')) progress.unlockedModes.push('fearLite');
+  const mode=$('mode').value; const text=line(mode,id); setDialogue(text); addEffect(t.emoji,t.anim); maybeCombo(id);
+  if(progress.memory.enabled){ recordNames(); rememberCount(progress.memory.favoriteTools,id); rememberCount(progress.memory.favoriteRooms,$('roomSelect').value); rememberCount(progress.memory.favoriteModes,mode); progress.memory.lastTool=id; progress.memory.lastRoom=$('roomSelect').value; progress.memory.lastMode=mode; progress.memory.lastPlayed=new Date().toISOString(); addMoment(`${tools[id].name} in ${rooms[$('roomSelect').value].name} while ${modes[mode]}`); }
+  progress.lastTool=id; render();
+}
+function maybeCombo(id){ const combos=[['confetti','disco'],['slime','gravity'],['soundboard','rubberHammer'],['ice','dramatic']]; const isCombo=(progress.lastTool && combos.some(c=>c.includes(progress.lastTool)&&c.includes(id))) || (id==='disco' && $('musicMood').value!=='none'); if(!isCombo) return; progress.xp+=10; progress.credits+=5; const b=$('comboBanner'); b.classList.remove('hidden'); setTimeout(()=>b.classList.add('hidden'),1100); }
+function addEffect(emoji,anim){ const room=$('room'); const char=$('character'); char.classList.remove('idle','hit','spin','bounce'); void char.offsetWidth; char.classList.add(anim||'hit'); setTimeout(()=>{char.classList.remove(anim||'hit'); char.classList.add('idle');},850); for(let i=0;i<7;i++){ const e=document.createElement('div'); e.className='effect'; e.textContent=emoji; e.style.left=(25+Math.random()*50)+'%'; e.style.top=(45+Math.random()*25)+'%'; e.style.animationDelay=(Math.random()*.18)+'s'; room.appendChild(e); setTimeout(()=>e.remove(),1200); } }
+function buy(type,target,cost){ if(progress.credits<cost) return; progress.credits-=cost; if(type==='tool') progress.unlockedTools.push(target); if(type==='room') progress.unlockedRooms.push(target); if(type==='mode') progress.unlockedModes.push(target); setDialogue(`Unlocked ${type}: ${target}. The lab just got more interesting.`); render(); }
+let audioCtx, oscillator, gain, musicTimer;
+function toggleMusic(){
+  if(musicTimer){ clearInterval(musicTimer); oscillator?.stop(); musicTimer=null; setDialogue('Mood sound stopped.'); return; }
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)(); oscillator=audioCtx.createOscillator(); gain=audioCtx.createGain(); oscillator.connect(gain); gain.connect(audioCtx.destination); gain.gain.value=.025; oscillator.type=$('musicMood').value==='disco'?'square':'sine'; oscillator.frequency.value=220; oscillator.start();
+  const mood=$('musicMood').value; const notes=mood==='spooky'?[180,160,220,140]:mood==='intense'?[240,320,380,260]:mood==='disco'?[220,330,440,330]:[260,330,390,330]; let i=0; musicTimer=setInterval(()=>{oscillator.frequency.value=notes[i++%notes.length];},220); setDialogue(`${mood === 'none' ? 'Neutral' : mood} mood sound started.`);
+}
+function initMemoryGate(){
+  const gate=$('memoryGate'); if(!gate) return;
+  if(!stored.memoryChoiceMade) gate.classList.remove('hidden');
+  const begin = enabled => { progress.memory.enabled=enabled; if(enabled){ progress.memory.encounters=(progress.memory.encounters||0)+1; progress.memory.firstMet=progress.memory.firstMet || new Date().toISOString(); progress.memory.lastPlayed=new Date().toISOString(); recordNames(); } stored.memoryChoiceMade=true; progress.memoryChoiceMade=true; gate.classList.add('hidden'); save(); render(); const msg=enabled ? `Memory enabled. I remember our encounters on this device.` : `Starting fresh. I will treat this like a brand-new encounter.`; addChat('ai',msg); setDialogue(msg); };
+  $('rememberBtn').onclick=()=>begin(true);
+  $('startNewBtn').onclick=()=>{ progress.memory=defaultMemory(); begin(false); };
+}
+function initInstall(){ let deferred; window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(); deferred=e; $('installBtn').classList.remove('hidden');}); $('installBtn').onclick=async()=>{ if(!deferred) return; deferred.prompt(); await deferred.userChoice; deferred=null; $('installBtn').classList.add('hidden');}; }
+['aiName','aiGender','mode','roomSelect','voiceStyle'].forEach(id=>$(id).addEventListener('change',()=>{ if(id==='aiName'||id==='aiGender') recordNames(); updateCharacter(); updateRoom(); render();}));
+$('speakBtn').onclick=()=>{progress.voiceOn=!progress.voiceOn; render();}; $('toggleMusic').onclick=toggleMusic; $('reset').onclick=()=>{localStorage.removeItem(STORAGE_KEY); location.reload();};
+$('toggleMemory').onclick=()=>{ progress.memory.enabled=!progress.memory.enabled; if(progress.memory.enabled){ progress.memory.encounters=(progress.memory.encounters||0)+1; progress.memory.firstMet=progress.memory.firstMet || new Date().toISOString(); recordNames(); setDialogue('Memory is on. I will reference past encounters.'); } else setDialogue('Memory is off. I will stop recording encounter details.'); render(); };
+$('clearMemory').onclick=()=>{ progress.memory=defaultMemory(); setDialogue('Memory cleared. Clean slate.'); render(); };
+$('sendChat').onclick=()=>{ const input=$('chatInput').value.trim(); if(!input) return; addChat('you',input); $('chatInput').value=''; recordChatTopic(input); const reply=chatReply(input); addChat('ai',reply); setDialogue(reply); render(); };
+$('chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter') $('sendChat').click(); });
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+initInstall(); render(); initMemoryGate(); addChat('ai','I am online. Pick a mode, send a message, or use a tool.');
